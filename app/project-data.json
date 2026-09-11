@@ -1,0 +1,32 @@
+{
+  "projects": [
+    {
+      "name": "Northstar Mobile",
+      "owner": "Maya Chen",
+      "status": "On track",
+      "recentActivity": "Completed usability testing for the new onboarding flow.",
+      "priority": "High"
+    },
+    {
+      "name": "Atlas Analytics",
+      "owner": "Jordan Williams",
+      "status": "At risk",
+      "recentActivity": "Data pipeline migration is waiting on access to the reporting warehouse.",
+      "priority": "High"
+    },
+    {
+      "name": "Greenline Refresh",
+      "owner": "Priya Nair",
+      "status": "On track",
+      "recentActivity": "The design system update is ready for engineering review.",
+      "priority": "Medium"
+    },
+    {
+      "name": "Customer Voice",
+      "owner": "Elliot Brooks",
+      "status": "Planning",
+      "recentActivity": "Synthesized interview themes and drafted the discovery brief.",
+      "priority": "Low"
+    }
+  ]
+}

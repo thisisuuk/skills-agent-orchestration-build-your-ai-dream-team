@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A live overview of project status, activity, and priority.">
+    <title>Project Pulse</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <header class="site-header">
+      <div class="container">
+        <p class="eyebrow">Team workspace</p>
+        <p class="brand">Project Pulse</p>
+      </div>
+    </header>
+
+    <main id="main-content" class="dashboard">
+      <div class="container">
+        <section class="dashboard-intro" aria-labelledby="page-title">
+          <p class="eyebrow">Portfolio overview</p>
+          <h1 id="page-title">Project Pulse</h1>
+          <p class="intro-copy">
+            See what each team is working on and where attention is needed next.
+          </p>
+        </section>
+
+        <section class="project-section" aria-labelledby="projects-heading">
+          <div class="section-heading">
+            <h2 id="projects-heading">Current projects</h2>
+            <p id="project-count" class="project-count" aria-live="polite"></p>
+          </div>
+
+          <div id="project-state" class="state state--loading" role="status" aria-live="polite">
+            Loading projects&hellip;
+          </div>
+          <div id="project-grid" class="project-grid" aria-busy="true"></div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>Project Pulse keeps project updates easy to scan.</p>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        "use strict";
+
+        const projectGrid = document.getElementById("project-grid");
+        const projectState = document.getElementById("project-state");
+        const projectCount = document.getElementById("project-count");
+        const requiredFields = ["name", "owner", "status", "recentActivity", "priority"];
+
+        function setState(type, message) {
+          projectState.className = "state state--" + type;
+          projectState.setAttribute("role", type === "error" ? "alert" : "status");
+          projectState.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+          projectState.textContent = message;
+          projectState.hidden = false;
+        }
+
+        function clearState() {
+          projectState.hidden = true;
+          projectState.textContent = "";
+        }
+
+        function validateProjects(data) {
+          if (!data || !Array.isArray(data.projects)) {
+            throw new Error("Project data must contain a projects array.");
+          }
+
+          data.projects.forEach(function (project, index) {
+            if (!project || typeof project !== "object") {
+              throw new Error("Project " + (index + 1) + " is not a valid record.");
+            }
+
+            requiredFields.forEach(function (field) {
+              if (typeof project[field] !== "string" || project[field].trim() === "") {
+                throw new Error("Project " + (index + 1) + " is missing " + field + ".");
+              }
+            });
+          });
+
+          return data.projects;
+        }
+
+        function createDetail(label, value, className) {
+          const wrapper = document.createElement("div");
+          const term = document.createElement("dt");
+          const description = document.createElement("dd");
+
+          term.textContent = label;
+          description.textContent = value;
+          if (className) {
+            description.className = className;
+          }
+
+          wrapper.append(term, description);
+          return wrapper;
+        }
+
+        function createProjectCard(project) {
+          const card = document.createElement("article");
+          const heading = document.createElement("h3");
+          const details = document.createElement("dl");
+
+          card.className = "project-card";
+          heading.className = "project-card__name";
+          heading.textContent = project.name;
+          details.className = "project-card__details";
+          details.append(
+            createDetail("Owner", project.owner),
+            createDetail("Status", project.status, "status-badge"),
+            createDetail("Recent activity", project.recentActivity),
+            createDetail("Priority", project.priority, "priority-badge")
+          );
+          card.append(heading, details);
+
+          return card;
+        }
+
+        function renderProjects(projects) {
+          projectGrid.replaceChildren();
+          projectGrid.setAttribute("aria-busy", "false");
+
+          if (projects.length === 0) {
+            projectCount.textContent = "0 projects";
+            setState("empty", "No projects are available yet.");
+            return;
+          }
+
+          projectCount.textContent = projects.length + (projects.length === 1 ? " project" : " projects");
+          projects.forEach(function (project) {
+            projectGrid.appendChild(createProjectCard(project));
+          });
+          clearState();
+        }
+
+        async function loadProjects() {
+          try {
+            const response = await fetch("project-data.json", { cache: "no-store" });
+            if (!response.ok) {
+              throw new Error("Project data request failed with status " + response.status + ".");
+            }
+
+            const projects = validateProjects(await response.json());
+            renderProjects(projects);
+          } catch (error) {
+            projectGrid.replaceChildren();
+            projectGrid.setAttribute("aria-busy", "false");
+            projectCount.textContent = "";
+            setState("error", "Unable to load project data. Please try again.");
+            console.error("Project Pulse could not load project data.", error);
+          }
+        }
+
+        loadProjects();
+      }());
+    </script>
+  </body>
+</html>
